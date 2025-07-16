@@ -1,0 +1,62 @@
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: propscholar
+      POSTGRES_PASSWORD: propscholar
+      POSTGRES_DB: propscholar_helpcenter
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U propscholar -d propscholar_helpcenter']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://propscholar:propscholar@db:5432/propscholar_helpcenter
+      JWT_SECRET: your-secret-key
+      NODE_ENV: production
+    ports:
+      - '3001:3001'
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:3001
+      NODE_ENV: production
+    ports:
+      - '3000:3000'
+    depends_on:
+      api:
+        condition: service_started
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:3001
+      NODE_ENV: production
+    ports:
+      - '3002:3000'
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  postgres_data:

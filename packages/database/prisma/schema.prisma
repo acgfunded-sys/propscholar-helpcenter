@@ -1,0 +1,76 @@
+
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  password    String
+  name        String
+  role        Role     @default(Editor)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Role {
+  Admin
+  Editor
+  Viewer
+}
+
+model Article {
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String   @unique
+  content     String
+  excerpt     String?
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  isFeatured  Boolean  @default(false)
+  views       Int      @default(0)
+  author      User     @relation(fields: [authorId], references: [id])
+  authorId    Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+  tags        Tag[]
+  metaTitle       String?
+  metaDescription String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  versions    ArticleVersion[]
+  feedback    Feedback[]
+}
+
+model ArticleVersion {
+  id        Int      @id @default(autoincrement())
+  article   Article  @relation(fields: [articleId], references: [id])
+  articleId Int
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?
+  isFeatured  Boolean   @default(false)
+  articles    Article[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Tag {
+  id        Int       @id @default(autoincrement())
+  name      String
+  slug      String    @unique
+  articles  Article[]
+  createdAt DateTime  @default(now())
+}
+
+model Feedback {
+  id        Int       @id @default(autoincrement())
+  article   Article   @relation(fields: [articleId], references: [id])
+  articleId Int
+  isHelpful Boolean
+  comment   String?
+  createdAt DateTime  @default(now())
+}
